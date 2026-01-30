@@ -1,0 +1,311 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+
+<meta name="viewport"
+content="width=device-width, initial-scale=1.0,
+maximum-scale=1.0, user-scalable=no">
+
+<title>Private Diary</title>
+
+<link href="https://fonts.googleapis.com/css2?family=Patrick+Hand&display=swap" rel="stylesheet">
+
+<style>
+*{box-sizing:border-box;}
+
+body{
+  margin:0;
+  height:100vh;
+  display:flex;
+  justify-content:center;
+  align-items:center;
+  background:#fff;
+  font-family:'Patrick Hand', cursive;
+  overflow:hidden;
+}
+
+/* ================= LOCK ================= */
+
+.lock-screen{
+  width:90%;
+  max-width:380px;
+  background:white;
+  border-radius:22px;
+  padding:35px 30px;
+  box-shadow:0 25px 60px rgba(0,0,0,.25);
+  text-align:center;
+}
+
+.lock-screen h2{
+  color:#5a2b38;
+}
+
+.lock-screen input{
+  width:100%;
+  padding:13px;
+  margin:10px 0;
+  border-radius:10px;
+  border:1px solid #ccc;
+  font-size:15px;
+}
+
+.lock-screen button{
+  padding:14px;
+  width:100%;
+  border:none;
+  border-radius:12px;
+  background:#5a2b38;
+  color:white;
+  font-size:16px;
+  cursor:pointer;
+}
+
+/* ================= DIARY ================= */
+
+.page-wrapper{
+  height:92vh;
+  aspect-ratio:9 / 16;
+  max-width:460px;
+  position:relative;
+  perspective:1600px;
+  display:none;
+}
+
+/* PAGE */
+.card{
+  position:absolute;
+  inset:0;
+  background:
+    linear-gradient(rgba(255,255,255,0.7),rgba(255,255,255,0.7)),
+    repeating-linear-gradient(
+      #ffe6ee 0px,
+      #ffe6ee 30px,
+      #f4b7c8 31px
+    );
+  border-radius:18px;
+  padding:75px 40px 95px 75px;
+  box-shadow:
+    inset 0 0 40px rgba(255,255,255,.7),
+    0 25px 60px rgba(0,0,0,.35);
+  overflow:hidden;
+  transform-style:preserve-3d;
+  transition:transform .6s ease, opacity .6s ease;
+}
+
+/* spiral */
+.spiral{
+  position:absolute;
+  left:20px;
+  top:30px;
+  bottom:30px;
+  display:flex;
+  flex-direction:column;
+  justify-content:space-evenly;
+}
+.spiral span{
+  width:30px;
+  height:12px;
+  border:3px solid #b06a82;
+  border-radius:20px;
+  background:#ffe6ee;
+}
+
+/* decorations */
+.decoration{
+  position:absolute;
+  pointer-events:none;
+}
+
+.flower-tl{
+  top:10px;
+  left:10px;
+  width:90px;
+  animation:float 6s ease-in-out infinite;
+}
+
+.flower-br{
+  bottom:10px;
+  right:10px;
+  width:90px;
+  animation:float 7s ease-in-out infinite;
+}
+
+.bokeh{
+  position:absolute;
+  top:-30px;
+  right:-30px;
+  width:160px;
+  opacity:.7;
+  animation:glow 8s infinite alternate;
+}
+
+.sorry{
+  position:absolute;
+  bottom:22px;
+  left:25px;
+  font-size:22px;
+  color:#d24b6a;
+  animation:pulse 2s infinite;
+}
+
+/* text */
+.card h2{
+  text-align:center;
+  font-size:26px;
+  color:#7a2f45;
+}
+.card p{
+  font-size:20px;
+  line-height:1.9;
+  color:#4a1e2c;
+}
+
+/* animation */
+.exit-left{ transform:rotateY(-45deg) translateX(-120%); opacity:0; }
+.exit-right{ transform:rotateY(45deg) translateX(120%); opacity:0; }
+.enter-left{ transform:rotateY(45deg) translateX(120%); }
+.enter-right{ transform:rotateY(-45deg) translateX(-120%); }
+
+@keyframes float{
+  0%,100%{ transform:translateY(0); }
+  50%{ transform:translateY(-10px); }
+}
+
+@keyframes pulse{
+  0%,100%{ opacity:.5; }
+  50%{ opacity:1; }
+}
+
+@keyframes glow{
+  from{ transform:scale(1); opacity:.4; }
+  to{ transform:scale(1.2); opacity:.8; }
+}
+</style>
+</head>
+
+<body>
+
+<!-- LOCK -->
+<div class="lock-screen" id="lock">
+  <h2>🔒 Private Diary</h2>
+  <p>Enter date & time to unlock</p>
+
+  <input type="date" id="date">
+  <input type="time" id="time">
+
+  <button onclick="unlock()">Unlock Diary</button>
+</div>
+
+<!-- DIARY -->
+<div class="page-wrapper" id="diary">
+  <div class="card" id="cardA"></div>
+  <div class="card" id="cardB"></div>
+</div>
+
+<script>
+const PASSWORD_DATE="2020-12-15";
+const PASSWORD_TIME="15:15";
+
+function unlock(){
+  if(
+    date.value===PASSWORD_DATE &&
+    time.value===PASSWORD_TIME
+  ){
+    lock.style.display="none";
+    diary.style.display="block";
+    startDiary();
+  }else{
+    alert("Wrong date or time");
+  }
+}
+
+/* PAGES */
+const pages=[
+{title:"Dear Diary",text:"I wrote this with honesty."},
+{title:"Feelings",text:"Some emotions never fade."},
+{title:"Mistakes",text:"I accept my mistakes."},
+{title:"Sorry",text:"I am deeply sorry."},
+{title:"Hope",text:"I still hope someday you smile."},
+{title:"End",text:"Thank you for reading my heart."}
+];
+
+let index=0,active=true,A,B,wrap;
+
+function startDiary(){
+  A=cardA; B=cardB; wrap=diary;
+  fill(A,pages[0]);
+  fill(B,pages[1]);
+  B.style.opacity=0;
+
+  let sx=0;
+  wrap.addEventListener("touchstart",e=>sx=e.touches[0].clientX);
+  wrap.addEventListener("touchend",e=>swipe(e.changedTouches[0].clientX-sx));
+  wrap.addEventListener("mousedown",e=>sx=e.clientX);
+  wrap.addEventListener("mouseup",e=>swipe(e.clientX-sx));
+}
+
+function fill(card,p){
+  card.innerHTML=`
+    <img class="bokeh" src="https://static.vecteezy.com/system/resources/previews/045/840/195/non_2x/colorful-flowers-bokeh-on-transparent-background-png.png">
+    <img class="flower-tl decoration" src="https://img1.pnghut.com/2/22/4/uccaAWkNxU/floral-design.jpg">
+    <img class="flower-br decoration" src="https://static.vecteezy.com/system/resources/previews/045/840/194/non_2x/colorful-flowers-bokeh-on-transparent-background-png.png">
+
+    <div class="sorry">sorry 💗</div>
+
+    <div class="spiral">
+      <span></span><span></span><span></span><span></span>
+      <span></span><span></span><span></span><span></span>
+    </div>
+
+    <h2>${p.title}</h2>
+    <p>${p.text}</p>
+  `;
+}
+
+function swipe(d){
+  if(Math.abs(d)<40)return;
+  d<0?nextPage():prevPage();
+}
+
+function nextPage(){
+  if(index>=pages.length-1)return;
+  const out=active?A:B, inc=active?B:A;
+  fill(inc,pages[index+1]);
+  inc.className="card enter-right";
+  inc.style.opacity=1;
+
+  requestAnimationFrame(()=>{
+    out.className="card exit-left";
+    inc.className="card";
+  });
+
+  setTimeout(()=>{
+    out.style.opacity=0;
+    out.className="card";
+    index++; active=!active;
+  },600);
+}
+
+function prevPage(){
+  if(index<=0)return;
+  const out=active?A:B, inc=active?B:A;
+  fill(inc,pages[index-1]);
+  inc.className="card enter-left";
+  inc.style.opacity=1;
+
+  requestAnimationFrame(()=>{
+    out.className="card exit-right";
+    inc.className="card";
+  });
+
+  setTimeout(()=>{
+    out.style.opacity=0;
+    out.className="card";
+    index--; active=!active;
+  },600);
+}
+</script>
+
+</body>
+</html>
